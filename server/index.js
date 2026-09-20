@@ -1,33 +1,35 @@
-// server/index.js
-
-import express from 'express';
 import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import cors from 'cors';
+import app from './app.js';
+import { env } from './config/env.js';
 
-// Import Routes
-import authRoutes from './routes/auth.js';
-import postRoutes from './routes/posts.js';
+const startServer = async () => {
+  try {
+    // Connect to MongoDB Atlas first
+    await mongoose.connect(env.MONGO_URI);
+    console.log('✅ Connected to MongoDB Atlas');
 
-dotenv.config();
+    // Only start listening after successful DB connection
+    const server = app.listen(env.PORT, () => {
+      console.log(`🚀 Server running on port ${env.PORT}`);
+    });
 
-const app = express();
-const PORT = process.env.PORT || 5000;
+    // Graceful Shutdown on process termination signals
+    const handleShutdown = async (signal) => {
+      console.log(`\n${signal} received. Closing HTTP server and DB connection...`);
+      server.close(async () => {
+        await mongoose.connection.close();
+        console.log('DB connection closed. Process exited cleanly.');
+        process.exit(0);
+      });
+    };
 
-// Middleware
-app.use(cors()); // Allows frontend (React) to make requests
-app.use(express.json()); // Parses incoming JSON payloads
+    process.on('SIGINT', () => handleShutdown('SIGINT'));
+    process.on('SIGTERM', () => handleShutdown('SIGTERM'));
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/posts', postRoutes);
+  } catch (error) {
+    console.error('❌ Failed to connect to MongoDB:', error.message);
+    process.exit(1);
+  }
+};
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB connected successfully'))
-  .catch(err => console.error('MongoDB connection error:', err));
-
-// Start Server
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+startServer();

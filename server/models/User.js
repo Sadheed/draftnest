@@ -24,7 +24,7 @@ const UserSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 
-// 🔥 FIXED: Pre-save hook (async middleware should NOT use next())
+//  FIXED: Pre-save hook (async middleware should NOT use next())
 UserSchema.pre('save', async function () {
   if (!this.isModified('password')) return;
 

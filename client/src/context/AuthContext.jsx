@@ -1,13 +1,21 @@
 // client/src/context/AuthContext.js
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import api from '../api/axios'; // Use the configured Axios instance
+import { AuthContext } from './AuthContext.js';
 
-const AuthContext = createContext();
+const readStoredUser = () => {
+    try {
+        return JSON.parse(localStorage.getItem('user')) || null;
+    } catch {
+        localStorage.removeItem('user');
+        return null;
+    }
+};
 
 export const AuthProvider = ({ children }) => {
     // Initialize state from localStorage
-    const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')) || null);
+    const [user, setUser] = useState(readStoredUser);
     const [token, setToken] = useState(localStorage.getItem('token') || null);
     const isLoggedIn = !!user;
 
@@ -24,7 +32,7 @@ export const AuthProvider = ({ children }) => {
             setUser({ _id: data._id, username: data.username });
             return true;
         } catch (error) {
-            console.error("Login failed:", error.response.data.message);
+            console.error('Login failed:', error.response?.data?.message || error.message);
             return false;
         }
     };
@@ -45,4 +53,3 @@ export const AuthProvider = ({ children }) => {
     );
 };
 
-export const useAuth = () => useContext(AuthContext);
