@@ -10,6 +10,8 @@ import { createPostSchema, postIdSchema, updatePostSchema } from '../validators/
 const router = express.Router();
 
 router.get('/', asyncHandler(postController.listPosts));
+router.get('/mine', protect, asyncHandler(postController.listMyPosts));
+router.get('/mine/:id', protect, validate(postIdSchema), asyncHandler(postController.getMyPost));
 router.get('/:id', validate(postIdSchema), asyncHandler(postController.getPost));
 router.post('/', protect, validate(createPostSchema), asyncHandler(postController.createPost));
 router.put('/:id', protect, validate(updatePostSchema), asyncHandler(postController.updatePost));

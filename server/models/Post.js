@@ -21,7 +21,7 @@ const PostSchema = new mongoose.Schema({
   tags: [String], // Array of strings for categorization
   isPublished: {
     type: Boolean,
-    default: true,
+    default: false,
   },
 }, { timestamps: true });
 

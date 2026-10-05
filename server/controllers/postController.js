@@ -2,6 +2,10 @@ import * as postService from '../services/postService.js';
 
 export const listPosts = async (req, res) => res.json(await postService.listPosts());
 
+export const listMyPosts = async (req, res) => res.json(await postService.listMyPosts(req.user._id));
+
+export const getMyPost = async (req, res) => res.json(await postService.getMyPost(req.params.id, req.user._id));
+
 export const getPost = async (req, res) => res.json(await postService.getPost(req.params.id));
 
 export const createPost = async (req, res) => {

@@ -24,10 +24,19 @@ export const getPost = (id) => Post.findOne({ _id: id, isPublished: true })
     return post;
   });
 
-export const createPost = ({ title, content, tags }, userId) => Post.create({
+export const listMyPosts = (userId) => Post.find({ author: userId }).sort({ updatedAt: -1 });
+
+export const getMyPost = async (id, userId) => {
+  const post = await Post.findOne({ _id: id, author: userId });
+  if (!post) throw new AppError('Post not found', 404, 'POST_NOT_FOUND');
+  return post;
+};
+
+export const createPost = ({ title, content, tags, isPublished = false }, userId) => Post.create({
   title,
   content,
   tags,
+  isPublished,
   author: userId,
 });
 

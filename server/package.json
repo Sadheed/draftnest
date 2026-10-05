@@ -5,7 +5,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "node --test",
+    "test": "node --test test/app.test.js test/drafts.test.js",
+    "test:integration": "node --test test/drafts.integration.test.js",
     "start": "node index.js",
     "dev": "nodemon index.js"
   },
