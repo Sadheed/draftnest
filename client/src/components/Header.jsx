@@ -48,6 +48,7 @@ const Header = () => {
           {isLoggedIn ? (
             <>
               {/* User pill */}
+              <Link to="/dashboard" className={`${isActive('/dashboard')} text-xs sm:text-sm`}>My posts</Link>
               <div className="hidden sm:flex items-center gap-2 rounded-full bg-slate-900/80 border border-slate-700 px-3 py-1.5">
                 <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/15 border border-emerald-400/40 text-xs font-semibold text-emerald-200">
                   {user?.username?.charAt(0)?.toUpperCase() || '?'}
