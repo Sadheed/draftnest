@@ -2,6 +2,14 @@
 
 DraftNest is a developer learning journal built with React, Express, MongoDB, and JWT authentication. It is intentionally structured as a reference project for learning Node.js backend development.
 
+## Private Drafts And Author Dashboard
+
+Sign in and open **My posts** to manage your journal. New posts are private drafts by default. Save a draft, edit it later, or select **Publish to the public feed** to make it public. The dashboard filters drafts and published posts and lets you publish, return a post to draft, or delete it after confirmation.
+
+Only the author can read a draft through the private API or change a post. Public read endpoints return 404 for drafts, including when the author sends a token. Existing published posts keep their saved publication status; changing the schema default affects new posts only.
+
+This release adds the dashboard and API access rules. Pagination, deployment, and revision history remain future work.
+
 ## Architecture
 
 ```text
@@ -67,10 +75,14 @@ Never commit `.env` files or database credentials. In MongoDB Atlas, add your de
 | POST   | `/api/auth/signup` | No         | Register a user         |
 | POST   | `/api/auth/login`  | No         | Issue a JWT             |
 | GET    | `/api/posts`       | No         | List published posts    |
+| GET    | `/api/posts/mine`  | Bearer JWT | List the author's drafts and published posts |
+| GET    | `/api/posts/mine/:id` | Bearer JWT | Read one owned post for editing |
 | GET    | `/api/posts/:id`   | No         | Read one published post |
 | POST   | `/api/posts`       | Bearer JWT | Create a post           |
 | PUT    | `/api/posts/:id`   | Bearer JWT | Update an owned post    |
 | DELETE | `/api/posts/:id`   | Bearer JWT | Delete an owned post    |
+
+Create requests accept `title`, `content`, `tags`, and optional boolean `isPublished` (defaults to `false`). Update requests accept any nonempty subset of those fields. Send `{ "isPublished": true }` to publish or `{ "isPublished": false }` to return to draft. Omitted fields retain their existing values. Ownership comes from authentication and cannot be changed through the request body. Whitespace-only titles/content are rejected; tags are limited to 10 entries of 30 characters each.
 
 ## Test And Quality Checks
 
@@ -84,7 +96,20 @@ npm run lint
 npm run build
 ```
 
-The API tests run without Atlas and cover health checks, 404 handling, validation, and protected routes. Add a disposable MongoDB integration suite when your environment can install `mongodb-memory-server`.
+The default suite runs without MongoDB or a personal `.env` file. It covers health checks, validation, private-route authentication, author-scoped queries, unauthorized edits/publishing/deletion, publication defaults, and updates that preserve tags. Database calls in the draft API tests are mocked; they do not establish database integration correctness.
+
+The separate integration suite runs against a disposable local MongoDB instance, creates a uniquely named test database, and drops only that database during cleanup. It exercises actual signup/login, public/private visibility, ownership, publishing/unpublishing, and deletion. Remote/Atlas URLs are refused.
+
+```powershell
+# Start a disposable database if Docker is installed:
+docker run --rm --name draftnest-test-mongo -p 27017:27017 mongo:7
+
+# In another terminal, from server/:
+$env:TEST_MONGO_URI = 'mongodb://127.0.0.1:27017'
+npm run test:integration
+```
+
+GitHub Actions runs both backend suites with a MongoDB service, frontend lint, and a production build on pushes and pull requests. Its first run still needs to be verified on GitHub.
 
 ## Node.js Learning Map
 
@@ -99,8 +124,17 @@ The API tests run without Atlas and cover health checks, 404 handling, validatio
 
 ## Next Portfolio Milestones
 
-1. Add drafts, publishing states, and an edit dashboard.
-2. Add pagination, search, tag filtering, and MongoDB indexes.
-3. Add revision history and scheduled publishing with a background worker.
-4. Add CI to run tests and client checks on every push.
-5. Deploy the client and API, then add screenshots and the live URL here.
+1. Add pagination, search, tag filtering, and MongoDB indexes.
+2. Deploy the client and API, then add screenshots and the live URL here.
+3. Add revision history; consider scheduled publishing after the core workflow is deployed.
+
+## Manual Release Check
+
+1. Register two test users with different emails.
+2. As user A, save a private draft; confirm it appears in My posts but not the feed.
+3. As user B, confirm that user A's draft is absent from My posts and private reads return 404. Attempts to update or delete it must return 403.
+4. As user A, edit the draft, publish it, and confirm its public detail page is available.
+5. Return it to draft and confirm the public detail page returns 404.
+6. Check dashboard filters, delete confirmation/cancellation, failed saves, and the layout on a narrow screen.
+
+No deployment or real-user metrics are claimed by this repository.
